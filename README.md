@@ -1,8 +1,6 @@
 # PZEM6L24_esphome
 
 
-Here is a `README.md` file suitable for your GitHub repository.
-
 ```markdown
 # ESPHome PZEM-6L24 Energy Monitor Component
 
