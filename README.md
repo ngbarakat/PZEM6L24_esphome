@@ -74,8 +74,12 @@ uart:
 # Load Custom Component
 external_components:
   - source:
-      type: local
-      path: custom_components
+# If you downloaded the files locally uncomment the next 2 lines
+#      type: local
+#      path: custom_components
+# comment the next 2 lines if you uncommented the above
+      type: git
+      url: https://github.com/ngbarakat/PZEM6L24_esphome
 
 # Hub Component
 pzem6l24:
