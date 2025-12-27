@@ -26,7 +26,7 @@ The port to the ESPHome external component architecture and the generated C++ co
 
 Please note that **very limited support can be provided** for this custom component. It is provided "as-is" and may require debugging or modification for specific use cases.
 
-## Installation
+## Local Installation
 
 1.  In your ESPHome configuration directory, create the folder structure:
     ```bash
