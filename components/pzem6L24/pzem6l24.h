@@ -30,7 +30,7 @@ namespace esphome {
 #define PZEM_APPARENT_ENERGY_COMBINED_REG 0x003E
 
 // Resolutions
-#define PZEM_VOLTAGE_RESOLUTION      0.1f
+#define PZEM_VOLTAGE_RESOLUTION      0.01f
 #define PZEM_CURRENT_RESOLUTION      0.01f
 #define PZEM_FREQUENCY_RESOLUTION    0.01f
 #define PZEM_POWER_RESOLUTION        0.1f
@@ -130,4 +130,5 @@ namespace esphome {
         };
 
     }  // namespace pzem6l24
+
 }  // namespace esphome
