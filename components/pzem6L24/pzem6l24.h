@@ -30,7 +30,7 @@ namespace esphome {
 #define PZEM_APPARENT_ENERGY_COMBINED_REG 0x003E
 
 // Resolutions
-#define PZEM_VOLTAGE_RESOLUTION      0.01f
+#define PZEM_VOLTAGE_RESOLUTION      0.1f
 #define PZEM_CURRENT_RESOLUTION      0.01f
 #define PZEM_FREQUENCY_RESOLUTION    0.01f
 #define PZEM_POWER_RESOLUTION        0.1f
@@ -123,6 +123,17 @@ namespace esphome {
             void refresh_values();
             void clearBuffer() { while (this->available()) this->read(); }
 
+            int32_t combine_registers_le(uint16_t lsb, uint16_t msb) {
+              // Explicit cast to uint32_t prevents Undefined Behavior when shifting 16-bit types
+              int32_t result_32 = ((uint32_t)lsb) | (((uint32_t)msb) << 16);
+              
+              // Log Inputs AND the Calculated Result
+              //ESP_LOGD("powerTest", "combine_registers_le: LSB=0x%04X (%d), MSB=0x%04X (%d) -> Result=%ld (0x%08X)", 
+              //             lsb, lsb, msb, msb, result_32, result_32);
+                         
+              return result_32;
+            }
+            
             int32_t combine_registers(uint16_t high, uint16_t low, bool is_signed) {
                 if (is_signed) return (int32_t)((int16_t)high << 16 | (uint16_t)low);
                 return (uint32_t)high << 16 | low;
@@ -130,5 +141,4 @@ namespace esphome {
         };
 
     }  // namespace pzem6l24
-
 }  // namespace esphome
