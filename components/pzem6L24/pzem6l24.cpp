@@ -19,6 +19,8 @@ uint16_t calc_crc(const uint8_t *data, uint16_t len) {
   return crc;
 }
 
+
+
 bool PZEM6L24Component::read_input_registers(uint8_t slaveAddr, uint16_t reg, uint8_t count, uint16_t *data) {
   uint8_t frame[8];
   frame[0] = slaveAddr; frame[1] = 0x04;
@@ -42,7 +44,8 @@ bool PZEM6L24Component::read_input_registers(uint8_t slaveAddr, uint16_t reg, ui
 
   if (this->read_array(buf, response_len)) {
     if (calc_crc(buf, response_len - 2) != ((buf[response_len-1] << 8) | buf[response_len-2])) return false;
-    for (int i = 0; i < count; i++) data[i] = (buf[3 + (i*2)] << 8) | buf[3 + (i*2) + 1];
+    // NEW LINE (Little Endian / Swapped)
+     for (int i = 0; i < count; i++) data[i] = (buf[3 + (i*2) + 1] << 8) | buf[3 + (i*2)]; 
     return true;
   }
   return false;
@@ -92,23 +95,24 @@ void PZEM6L24Component::refresh_values() {
 
   // 4. Read Active Power (3 phases * 2 regs = 6 regs)
   if (read_input_registers(this->_slaveAddr, PZEM_ACTIVE_POWER_REG, 6, data)) {
-    this->act_pwr_[0] = combine_registers(data[0], data[1], true) * PZEM_POWER_RESOLUTION;
-    this->act_pwr_[1] = combine_registers(data[2], data[3], true) * PZEM_POWER_RESOLUTION;
-    this->act_pwr_[2] = combine_registers(data[4], data[5], true) * PZEM_POWER_RESOLUTION;
+    this->act_pwr_[0] = (combine_registers_le(data[0],data[1])) * PZEM_POWER_RESOLUTION;
+    this->act_pwr_[1] = (combine_registers_le(data[2],data[3])) * PZEM_POWER_RESOLUTION;
+    this->act_pwr_[2] = (combine_registers_le(data[4],data[5])) * PZEM_POWER_RESOLUTION;
   } else { this->act_pwr_[0] = this->act_pwr_[1] = this->act_pwr_[2] = NAN; }
 
   // 5. Read Reactive Power (6 regs)
   if (read_input_registers(this->_slaveAddr, PZEM_REACTIVE_POWER_REG, 6, data)) {
-    this->react_pwr_[0] = combine_registers(data[0], data[1], true) * PZEM_POWER_RESOLUTION;
-    this->react_pwr_[1] = combine_registers(data[2], data[3], true) * PZEM_POWER_RESOLUTION;
-    this->react_pwr_[2] = combine_registers(data[4], data[5], true) * PZEM_POWER_RESOLUTION;
+    this->react_pwr_[0] = (combine_registers_le(data[0],data[1])) * PZEM_POWER_RESOLUTION;
+    this->react_pwr_[1] = (combine_registers_le(data[2],data[3])) * PZEM_POWER_RESOLUTION;
+    this->react_pwr_[2] = (combine_registers_le(data[4],data[5])) * PZEM_POWER_RESOLUTION;
   } else { this->react_pwr_[0] = this->react_pwr_[1] = this->react_pwr_[2] = NAN; }
 
   // 6. Read Apparent Power (6 regs)
   if (read_input_registers(this->_slaveAddr, PZEM_APPARENT_POWER_REG, 6, data)) {
-    this->app_pwr_[0] = combine_registers(data[0], data[1], true) * PZEM_POWER_RESOLUTION;
-    this->app_pwr_[1] = combine_registers(data[2], data[3], true) * PZEM_POWER_RESOLUTION;
-    this->app_pwr_[2] = combine_registers(data[4], data[5], true) * PZEM_POWER_RESOLUTION;
+    this->app_pwr_[0] = (combine_registers_le(data[0],data[1])) * PZEM_POWER_RESOLUTION;
+    this->app_pwr_[1] = (combine_registers_le(data[2],data[3])) * PZEM_POWER_RESOLUTION;
+    this->app_pwr_[2] = (combine_registers_le(data[4],data[5])) * PZEM_POWER_RESOLUTION;  
+      
   } else { this->app_pwr_[0] = this->app_pwr_[1] = this->app_pwr_[2] = NAN; }
 
   // 7. Read Power Factor (2 regs)
@@ -121,47 +125,48 @@ void PZEM6L24Component::refresh_values() {
 
   // 8. Read Active Energy (6 regs)
   if (read_input_registers(this->_slaveAddr, PZEM_ACTIVE_ENERGY_REG, 6, data)) {
-    this->act_nrg_[0] = combine_registers(data[0], data[1], true) * PZEM_ENERGY_RESOLUTION;
-    this->act_nrg_[1] = combine_registers(data[2], data[3], true) * PZEM_ENERGY_RESOLUTION;
-    this->act_nrg_[2] = combine_registers(data[4], data[5], true) * PZEM_ENERGY_RESOLUTION;
+    this->act_nrg_[0] = (combine_registers_le(data[0],data[1])) * PZEM_POWER_RESOLUTION;
+    this->act_nrg_[1] = (combine_registers_le(data[2],data[3])) * PZEM_POWER_RESOLUTION;
+    this->act_nrg_[2] = (combine_registers_le(data[4],data[5])) * PZEM_POWER_RESOLUTION;  
   } else { this->act_nrg_[0] = this->act_nrg_[1] = this->act_nrg_[2] = NAN; }
 
   // 9. Read Reactive Energy (6 regs)
   if (read_input_registers(this->_slaveAddr, PZEM_REACTIVE_ENERGY_REG, 6, data)) {
-    this->react_nrg_[0] = combine_registers(data[0], data[1], true) * PZEM_ENERGY_RESOLUTION;
-    this->react_nrg_[1] = combine_registers(data[2], data[3], true) * PZEM_ENERGY_RESOLUTION;
-    this->react_nrg_[2] = combine_registers(data[4], data[5], true) * PZEM_ENERGY_RESOLUTION;
+    this->react_nrg_[0] = (combine_registers_le(data[0],data[1])) * PZEM_POWER_RESOLUTION;
+    this->react_nrg_[1] = (combine_registers_le(data[2],data[3])) * PZEM_POWER_RESOLUTION;
+    this->react_nrg_[2] = (combine_registers_le(data[4],data[5])) * PZEM_POWER_RESOLUTION;  
   } else { this->react_nrg_[0] = this->react_nrg_[1] = this->react_nrg_[2] = NAN; }
 
   // 10. Read Apparent Energy (6 regs)
   if (read_input_registers(this->_slaveAddr, PZEM_APPARENT_ENERGY_REG, 6, data)) {
-    this->app_nrg_[0] = combine_registers(data[0], data[1], true) * PZEM_ENERGY_RESOLUTION;
-    this->app_nrg_[1] = combine_registers(data[2], data[3], true) * PZEM_ENERGY_RESOLUTION;
-    this->app_nrg_[2] = combine_registers(data[4], data[5], true) * PZEM_ENERGY_RESOLUTION;
+    this->app_nrg_[0] = (combine_registers_le(data[0],data[1])) * PZEM_POWER_RESOLUTION;
+    this->app_nrg_[1] = (combine_registers_le(data[2],data[3])) * PZEM_POWER_RESOLUTION;
+    this->app_nrg_[2] = (combine_registers_le(data[4],data[5])) * PZEM_POWER_RESOLUTION;  
   } else { this->app_nrg_[0] = this->app_nrg_[1] = this->app_nrg_[2] = NAN; }
 
   // 11. Read Combined Power (6 regs total for all 3 combined types)
   if (read_input_registers(this->_slaveAddr, PZEM_ACTIVE_POWER_COMBINED_REG, 6, data)) {
-    this->total_act_pwr_ = combine_registers(data[0], data[1], true) * PZEM_POWER_RESOLUTION;
-    this->total_react_pwr_ = combine_registers(data[2], data[3], true) * PZEM_POWER_RESOLUTION;
-    this->total_app_pwr_ = combine_registers(data[4], data[5], true) * PZEM_POWER_RESOLUTION;
+    this->total_act_pwr_ = (combine_registers_le(data[0],data[1])) * PZEM_ENERGY_RESOLUTION;
+    this->total_react_pwr_ = (combine_registers_le(data[2],data[3])) * PZEM_ENERGY_RESOLUTION;
+    this->total_app_pwr_ = (combine_registers_le(data[4],data[5])) * PZEM_ENERGY_RESOLUTION;
+      
   } else { this->total_act_pwr_ = this->total_react_pwr_ = this->total_app_pwr_ = NAN; }
 
   // 12. Read Combined Energy (6 regs)
   if (read_input_registers(this->_slaveAddr, PZEM_ACTIVE_ENERGY_COMBINED_REG, 6, data)) {
-    this->total_act_nrg_ = combine_registers(data[0], data[1], true) * PZEM_ENERGY_RESOLUTION;
-    this->total_react_nrg_ = combine_registers(data[2], data[3], true) * PZEM_ENERGY_RESOLUTION;
-    this->total_app_nrg_ = combine_registers(data[4], data[5], true) * PZEM_ENERGY_RESOLUTION;
+    this->total_act_nrg_ = (combine_registers_le(data[0],data[1])) * PZEM_ENERGY_RESOLUTION;
+    this->total_react_nrg_ = (combine_registers_le(data[2],data[3])) * PZEM_ENERGY_RESOLUTION;
+    this->total_app_nrg_ = (combine_registers_le(data[4],data[5])) * PZEM_ENERGY_RESOLUTION;    
   } else { this->total_act_nrg_ = this->total_react_nrg_ = this->total_app_nrg_ = NAN; }
 
   // 13. Read Angles (5 regs)
   if (read_input_registers(this->_slaveAddr, PZEM_VOLTAGE_PHASE_REG, 5, data)) {
     this->vol_ang_[0] = 0.0f; // Ref
-    this->vol_ang_[1] = data[0] * PZEM_PHASE_RESOLUTION;
-    this->vol_ang_[2] = data[1] * PZEM_PHASE_RESOLUTION;
-    this->cur_ang_[0] = data[2] * PZEM_PHASE_RESOLUTION;
-    this->cur_ang_[1] = data[3] * PZEM_PHASE_RESOLUTION;
-    this->cur_ang_[2] = data[4] * PZEM_PHASE_RESOLUTION;
+    this->vol_ang_[1] =  ((int16_t)data[0]) * PZEM_PHASE_RESOLUTION;
+    this->vol_ang_[2] =  ((int16_t)data[1]) * PZEM_PHASE_RESOLUTION;
+    this->cur_ang_[0] =  ((int16_t)data[2]) * PZEM_PHASE_RESOLUTION;
+    this->cur_ang_[1] =  ((int16_t)data[3]) * PZEM_PHASE_RESOLUTION;
+    this->cur_ang_[2] =  ((int16_t)data[4]) * PZEM_PHASE_RESOLUTION;
   } else {
     this->vol_ang_[0] = this->vol_ang_[1] = this->vol_ang_[2] = NAN;
     this->cur_ang_[0] = this->cur_ang_[1] = this->cur_ang_[2] = NAN;
@@ -176,10 +181,13 @@ void PZEM6L24Component::refresh_values() {
 
     if (p == PHASE_COMBINED) {
       if (t == PZEM_TYPE_VOLTAGE) {
-        // Calculate Average Voltage
-        // If any phase is NAN, the result will be NaN (C++ standard for math with NaNs)
+        // Calculate Average Voltage (Note: This is skewed in 1-phase setups, but correct for 3-phase)
         val = (this->vol_[0] + this->vol_[1] + this->vol_[2]) / 3.0f;
       }
+      else if (t == PZEM_TYPE_FREQUENCY) {
+        // Calculate Average Frequency (Best practice for Frequency sensors)
+        val = (this->freq_[0] + this->freq_[1] + this->freq_[2]) / 3.0f;
+      }      
       else if (t == PZEM_TYPE_ACTIVE_POWER) val = this->total_act_pwr_;
       else if (t == PZEM_TYPE_REACTIVE_POWER) val = this->total_react_pwr_;
       else if (t == PZEM_TYPE_APPARENT_POWER) val = this->total_app_pwr_;
